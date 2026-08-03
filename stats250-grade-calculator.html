@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STATS 250 Grade Calculator — Summer 2026</title>
+<style>
+  :root {
+    --um-blue: #00274C;
+    --um-maize: #FFCB05;
+    --um-blue-light: #0D4A7A;
+    --um-gray: #F2F2F2;
+    --um-gray-mid: #D6D6D6;
+    --um-gray-dark: #666;
+    --radius: 8px;
+    --shadow: 0 2px 8px rgba(0,39,76,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #fff;
+    color: #222;
+    line-height: 1.5;
+  }
+
+  header {
+    background: var(--um-blue);
+    color: #fff;
+    padding: 1.5rem 1rem;
+    text-align: center;
+  }
+  header h1 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  header p {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  /* Instructions */
+  .instructions {
+    background: #FFF9E0;
+    border-left: 4px solid var(--um-maize);
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 0.88rem;
+    color: #333;
+  }
+  .instructions strong { color: var(--um-blue); }
+
+  /* Option selector */
+  .option-selector {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .option-btn {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--um-gray-mid);
+    border-radius: var(--radius);
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .option-btn:hover {
+    border-color: var(--um-blue-light);
+  }
+  .option-btn.selected {
+    border-color: var(--um-blue);
+    background: #EAF1F8;
+  }
+  .option-btn .option-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--um-blue);
+  }
+  .option-btn .option-desc {
+    font-size: 0.8rem;
+    color: var(--um-gray-dark);
+    margin-top: 0.2rem;
+  }
+
+  /* Category sections */
+  .category {
+    background: #fff;
+    border: 1px solid var(--um-gray-mid);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .category-header {
+    background: var(--um-gray);
+    padding: 0.7rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .category-header:hover { background: #e8e8e8; }
+  .category-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--um-blue);
+  }
+  .category-weight {
+    font-size: 0.8rem;
+    color: var(--um-gray-dark);
+    background: #fff;
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+    border: 1px solid var(--um-gray-mid);
+  }
+  .category-body {
+    padding: 0.75rem 1rem;
+  }
+  .category-body.collapsed {
+    display: none;
+  }
+  .category-note {
+    font-size: 0.78rem;
+    color: var(--um-gray-dark);
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+
+  /* Score rows */
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .score-row:last-child { border-bottom: none; }
+  .score-label {
+    flex: 1;
+    font-size: 0.88rem;
+    color: #333;
+  }
+  .score-label .dropped {
+    font-size: 0.72rem;
+    color: #c0392b;
+    font-weight: 600;
+    margin-left: 0.35rem;
+  }
+  .score-input {
+    width: 80px;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--um-gray-mid);
+    border-radius: 4px;
+    font-size: 0.88rem;
+    text-align: center;
+    transition: border-color 0.15s;
+  }
+  .score-input:focus {
+    outline: none;
+    border-color: var(--um-blue);
+    box-shadow: 0 0 0 2px rgba(0,39,76,0.12);
+  }
+  .score-input.error {
+    border-color: #c0392b;
+    background: #fdf0ef;
+  }
+  .score-pct {
+    font-size: 0.78rem;
+    color: var(--um-gray-dark);
+    width: 40px;
+    text-align: right;
+  }
+
+  /* Results panel */
+  .results {
+    background: var(--um-blue);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0,39,76,0.2);
+  }
+  .results-label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .results-grade {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin: 0.25rem 0;
+    color: var(--um-maize);
+  }
+  .results-pct {
+    font-size: 1.2rem;
+    opacity: 0.9;
+  }
+  .results-breakdown {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.25rem;
+    font-size: 0.78rem;
+    opacity: 0.8;
+  }
+
+  /* Buttons */
+  .actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    justify-content: center;
+  }
+  .btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+  .btn-primary {
+    background: var(--um-maize);
+    color: var(--um-blue);
+  }
+  .btn-primary:hover { background: #e6b800; }
+  .btn-secondary {
+    background: var(--um-gray);
+    color: #333;
+  }
+  .btn-secondary:hover { background: #ddd; }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .option-selector { flex-direction: column; }
+    .score-row { gap: 0.4rem; }
+    .score-input { width: 65px; }
+    .results-grade { font-size: 2.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>STATS 250 Grade Calculator</h1>
+  <p>Introduction to Statistics and Data Analysis — Summer 2026</p>
+</header>
+
+<div class="container">
+
+  <div class="instructions">
+    <strong>How to use:</strong> Select your grading option below, then enter your scores as
+    <strong>proportions between 0 and 1</strong> (e.g., if you earned 16 out of 20 points on an
+    assignment, enter <strong>0.8</strong>). Leave any assignments you haven't completed yet blank
+    — the calculator will use only the scores you enter. Your overall grade updates automatically.
+  </div>
+
+  <!-- Grading option selector -->
+  <div class="option-selector">
+    <button class="option-btn selected" onclick="selectOption(1)" id="opt1-btn">
+      <div class="option-title">Option 1: Active Attendance</div>
+      <div class="option-desc">In-person lectures required; lecture group work counts (10%)</div>
+    </button>
+    <button class="option-btn" onclick="selectOption(2)" id="opt2-btn">
+      <div class="option-title">Option 2: Optional Attendance</div>
+      <div class="option-desc">Lecture group work does not count; exam weights increase</div>
+    </button>
+  </div>
+
+  <!-- Exams -->
+  <div class="category">
+    <div class="category-header" onclick="toggleSection('exams')">
+      <span class="category-title">Exams</span>
+      <span class="category-weight" id="exams-weight">40%</span>
+    </div>
+    <div class="category-body" id="exams-body">
+      <div class="score-row">
+        <span class="score-label">Exam 1 <span style="font-size:0.75rem;color:#888;">(July 23)</span></span>
+        <input type="text" class="score-input" id="exam1" inputmode="decimal" placeholder="0–1" oninput="calculate()">
+        <span class="score-pct" id="exam1-pct"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-label">Exam 2 <span style="font-size:0.75rem;color:#888;">(Aug 17)</span></span>
+        <input type="text" class="score-input" id="exam2" inputmode="decimal" placeholder="0–1" oninput="calculate()">
+        <span class="score-pct" id="exam2-pct"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case Studies -->
+  <div class="category">
+    <div class="category-header" onclick="toggleSection('cases')">
+      <span class="category-title">Case Studies</span>
+      <span class="category-weight">30%</span>
+    </div>
+    <div class="category-body" id="cases-body">
+      <div class="score-row">
+        <span class="score-label">Case Study 1 <span style="font-size:0.75rem;color:#888;">(due July 25)</span></span>
+        <input type="text" class="score-input" id="case1" inputmode="decimal" placeholder="0–1" oninput="calculate()">
+        <span class="score-pct" id="case1-pct"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-label">Case Study 2 <span style="font-size:0.75rem;color:#888;">(due Aug 15)</span></span>
+        <input type="text" class="score-input" id="case2" inputmode="decimal" placeholder="0–1" oninput="calculate()">
+        <span class="score-pct" id="case2-pct"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Homework -->
+  <div class="category">
+    <div class="category-header" onclick="toggleSection('hw')">
+      <span class="category-title">Homework</span>
+      <span class="category-weight">10%</span>
+    </div>
+    <div class="category-body" id="hw-body">
+      <div id="hw-rows"></div>
+    </div>
+  </div>
+
+  <!-- Lab Work -->
+  <div class="category">
+    <div class="category-header" onclick="toggleSection('labs')">
+      <span class="category-title">Lab Work</span>
+      <span class="category-weight">10%</span>
+    </div>
+    <div class="category-body" id="labs-body">
+      <div id="lab-rows"></div>
+    </div>
+  </div>
+
+  <!-- Lecture Group Work (Option 1 only) -->
+  <div class="category" id="lecture-section">
+    <div class="category-header" onclick="toggleSection('lecture')">
+      <span class="category-title">Lecture Group Work</span>
+      <span class="category-weight" id="lecture-weight">10%</span>
+    </div>
+    <div class="category-body" id="lecture-body">
+      <div class="category-note">
+        Lectures 2–16 (15 activities). Your 3 lowest scores will be automatically dropped.
+      </div>
+      <div id="lecture-rows"></div>
+    </div>
+  </div>
+
+  <!-- Extra Credit -->
+  <div class="category">
+    <div class="category-header" onclick="toggleSection('ec')">
+      <span class="category-title">Extra Credit</span>
+      <span class="category-weight">up to +2.5%</span>
+    </div>
+    <div class="category-body" id="ec-body">
+      <div class="category-note">
+        Extra credit is added on top of your base grade (which totals 100%).
+      </div>
+      <div class="score-row">
+        <span class="score-label">Module 0 <span style="font-size:0.75rem;color:#888;">(+1%)</span></span>
+        <input type="text" class="score-input" id="ec_mod0" inputmode="decimal" placeholder="0–1" oninput="calculate()">
+        <span class="score-pct" id="ec_mod0-pct"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-label">Course Evaluation <span style="font-size:0.75rem;color:#888;">(+1.5%)</span></span>
+        <input type="text" class="score-input" id="ec_eval" inputmode="decimal" placeholder="0–1" oninput="calculate()">
+        <span class="score-pct" id="ec_eval-pct"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-secondary" onclick="clearAll()">Clear All Scores</button>
+  </div>
+
+  <!-- Results -->
+  <div class="results">
+    <div class="results-label">Estimated Course Grade</div>
+    <div class="results-grade" id="letter-grade">—</div>
+    <div class="results-pct" id="overall-pct">Enter scores above</div>
+    <div class="results-breakdown" id="breakdown"></div>
+  </div>
+
+</div>
+
+<script>
+// ── Configuration ──
+const hwInfo = [
+  { id: 'hw1', label: 'HW 1', note: 'due July 11' },
+  { id: 'hw2', label: 'HW 2', note: 'due July 14' },
+  { id: 'hw3', label: 'HW 3', note: 'due July 21' },
+  { id: 'hw4', label: 'HW 4', note: 'due Aug 4' },
+  { id: 'hw5', label: 'HW 5', note: 'due Aug 11' },
+  { id: 'hw6', label: 'HW 6', note: 'due Aug 15' },
+];
+
+const labInfo = [
+  { id: 'lab1', label: 'Lab 1', note: 'Getting started in R' },
+  { id: 'lab2', label: 'Lab 2', note: 'Sampling distributions' },
+  { id: 'lab3', label: 'Lab 3', note: 'Data Analysis in R' },
+  { id: 'lab4', label: 'Lab 4', note: 'Associations & Confounders' },
+  { id: 'lab5', label: 'Lab 5', note: 'ANOVA' },
+  { id: 'lab6', label: 'Lab 6', note: 'Regression in R' },
+];
+
+const gradeScale = [
+  { min: 97,  grade: 'A+' },
+  { min: 90,  grade: 'A'  },
+  { min: 88,  grade: 'A−' },
+  { min: 86,  grade: 'B+' },
+  { min: 80,  grade: 'B'  },
+  { min: 78,  grade: 'B−' },
+  { min: 75,  grade: 'C+' },
+  { min: 70,  grade: 'C'  },
+  { min: 65,  grade: 'C−' },
+  { min: 60,  grade: 'D+' },
+  { min: 55,  grade: 'D'  },
+  { min: 50,  grade: 'D−' },
+  { min: 0,   grade: 'E'  },
+];
+
+let currentOption = 1;
+
+// ── Build score rows ──
+function buildRows(containerId, items) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = items.map(item => `
+    <div class="score-row">
+      <span class="score-label">${item.label} <span style="font-size:0.75rem;color:#888;">(${item.note})</span></span>
+      <input type="text" class="score-input" id="${item.id}" inputmode="decimal" placeholder="0–1" oninput="calculate()">
+      <span class="score-pct" id="${item.id}-pct"></span>
+    </div>
+  `).join('');
+}
+
+function buildLectureRows() {
+  const container = document.getElementById('lecture-rows');
+  let html = '';
+  for (let i = 2; i <= 16; i++) {
+    html += `
+      <div class="score-row" id="lec${i}-row">
+        <span class="score-label" id="lec${i}-label">Lecture ${i}</span>
+        <input type="text" class="score-input" id="lec${i}" inputmode="decimal" placeholder="0–1" oninput="calculate()">
+        <span class="score-pct" id="lec${i}-pct"></span>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
+// ── Option selection ──
+function selectOption(opt) {
+  currentOption = opt;
+  document.getElementById('opt1-btn').classList.toggle('selected', opt === 1);
+  document.getElementById('opt2-btn').classList.toggle('selected', opt === 2);
+
+  const lectureSection = document.getElementById('lecture-section');
+  lectureSection.style.display = opt === 1 ? 'block' : 'none';
+
+  // Update exam weight display
+  const examWeight = opt === 1 ? '40%' : '50%';
+  document.getElementById('exams-weight').textContent = examWeight;
+
+  calculate();
+}
+
+// ── Section toggle ──
+function toggleSection(name) {
+  const body = document.getElementById(name + '-body');
+  body.classList.toggle('collapsed');
+}
+
+// ── Parse input value ──
+function parseScore(id) {
+  const el = document.getElementById(id);
+  const val = el.value.trim();
+  if (val === '') return null;
+  const num = parseFloat(val);
+  if (isNaN(num) || num < 0 || num > 1) {
+    el.classList.add('error');
+    return null;
+  }
+  el.classList.remove('error');
+  return num;
+}
+
+// ── Compute average with optional drop ──
+function avgScores(ids, dropCount) {
+  const scores = [];
+  let entered = 0;
+  ids.forEach(id => {
+    const s = parseScore(id);
+    if (s !== null) {
+      scores.push({ id, val: s });
+      entered++;
+    }
+  });
+
+  if (entered === 0) return { avg: null, dropped: [], entered: 0 };
+
+  // Sort ascending for dropping
+  scores.sort((a, b) => a.val - b.val);
+
+  const dropped = [];
+  if (dropCount > 0 && scores.length > dropCount) {
+    for (let i = 0; i < dropCount; i++) {
+      dropped.push(scores[i].id);
+    }
+    const kept = scores.slice(dropCount);
+    const avg = kept.reduce((s, x) => s + x.val, 0) / kept.length;
+    return { avg, dropped, entered };
+  } else if (dropCount > 0 && scores.length <= dropCount) {
+    // All scores would be dropped — treat as full credit for dropped ones
+    return { avg: scores.length > 0 ? scores[scores.length - 1].val : null, dropped: [], entered };
+  }
+
+  const avg = scores.reduce((s, x) => s + x.val, 0) / scores.length;
+  return { avg, dropped, entered };
+}
+
+// ── Update percentage display ──
+function showPct(id, val) {
+  const el = document.getElementById(id + '-pct');
+  if (val !== null) {
+    el.textContent = (val * 100).toFixed(1) + '%';
+  } else {
+    el.textContent = '';
+  }
+}
+
+// ── Letter grade lookup ──
+function letterGrade(pct) {
+  for (const g of gradeScale) {
+    if (pct >= g.min) return g.grade;
+  }
+  return 'E';
+}
+
+// ── Main calculation ──
+function calculate() {
+  // Individual percentage displays
+  ['exam1', 'exam2', 'case1', 'case2', 'ec_mod0', 'ec_eval'].forEach(id => {
+    showPct(id, parseScore(id));
+  });
+  hwInfo.forEach(h => showPct(h.id, parseScore(h.id)));
+  labInfo.forEach(l => showPct(l.id, parseScore(l.id)));
+  for (let i = 2; i <= 16; i++) showPct('lec' + i, parseScore('lec' + i));
+
+  // Category averages
+  const lecIds = [];
+  for (let i = 2; i <= 16; i++) lecIds.push('lec' + i);
+  const lecResult = avgScores(lecIds, 3);
+
+  // Mark dropped lectures
+  for (let i = 2; i <= 16; i++) {
+    const label = document.getElementById('lec' + i + '-label');
+    const existingDrop = label.querySelector('.dropped');
+    if (existingDrop) existingDrop.remove();
+    if (lecResult.dropped.includes('lec' + i)) {
+      const span = document.createElement('span');
+      span.className = 'dropped';
+      span.textContent = '(dropped)';
+      label.appendChild(span);
+    }
+  }
+
+  const hwIds = hwInfo.map(h => h.id);
+  const labIds = labInfo.map(l => l.id);
+
+  const hwResult = avgScores(hwIds, 0);
+  const labResult = avgScores(labIds, 0);
+
+  const exam1 = parseScore('exam1');
+  const exam2 = parseScore('exam2');
+  const case1 = parseScore('case1');
+  const case2 = parseScore('case2');
+
+  // Case study average
+  let caseAvg = null;
+  let caseCount = 0;
+  if (case1 !== null) { caseCount++; }
+  if (case2 !== null) { caseCount++; }
+  if (caseCount > 0) {
+    caseAvg = ((case1 || 0) + (case2 || 0)) / caseCount;
+  }
+
+  // Weights
+  let weights;
+  if (currentOption === 1) {
+    weights = {
+      lecture: 10,
+      exam1: 20,
+      exam2: 20,
+      cases: 30,
+      hw: 10,
+      labs: 10,
+    };
+  } else {
+    weights = {
+      lecture: 0,
+      exam1: 25,
+      exam2: 25,
+      cases: 30,
+      hw: 10,
+      labs: 10,
+    };
+  }
+
+  // Weighted sum (only include categories with data)
+  let totalWeight = 0;
+  let totalScore = 0;
+  const parts = [];
+
+  if (currentOption === 1 && lecResult.avg !== null) {
+    totalWeight += weights.lecture;
+    totalScore += weights.lecture * lecResult.avg;
+    parts.push(`Lecture: ${(lecResult.avg * 100).toFixed(1)}%`);
+  }
+  if (exam1 !== null) {
+    totalWeight += weights.exam1;
+    totalScore += weights.exam1 * exam1;
+    parts.push(`Exam 1: ${(exam1 * 100).toFixed(1)}%`);
+  }
+  if (exam2 !== null) {
+    totalWeight += weights.exam2;
+    totalScore += weights.exam2 * exam2;
+    parts.push(`Exam 2: ${(exam2 * 100).toFixed(1)}%`);
+  }
+  if (caseAvg !== null) {
+    totalWeight += weights.cases;
+    totalScore += weights.cases * caseAvg;
+    parts.push(`Cases: ${(caseAvg * 100).toFixed(1)}%`);
+  }
+  if (hwResult.avg !== null) {
+    totalWeight += weights.hw;
+    totalScore += weights.hw * hwResult.avg;
+    parts.push(`HW: ${(hwResult.avg * 100).toFixed(1)}%`);
+  }
+  if (labResult.avg !== null) {
+    totalWeight += weights.labs;
+    totalScore += weights.labs * labResult.avg;
+    parts.push(`Labs: ${(labResult.avg * 100).toFixed(1)}%`);
+  }
+
+  // Extra credit (additive on top of base 100%)
+  const ecMod0 = parseScore('ec_mod0');
+  const ecEval = parseScore('ec_eval');
+  let ecBonus = 0;
+  if (ecMod0 !== null) {
+    ecBonus += ecMod0 * 1.0;
+    parts.push(`EC Module 0: +${(ecMod0 * 1.0).toFixed(2)}%`);
+  }
+  if (ecEval !== null) {
+    ecBonus += ecEval * 1.5;
+    parts.push(`EC Evaluation: +${(ecEval * 1.5).toFixed(2)}%`);
+  }
+
+  const gradeEl = document.getElementById('letter-grade');
+  const pctEl = document.getElementById('overall-pct');
+  const breakdownEl = document.getElementById('breakdown');
+
+  if (totalWeight === 0 && ecBonus === 0) {
+    gradeEl.textContent = '—';
+    pctEl.textContent = 'Enter scores above';
+    breakdownEl.innerHTML = '';
+    return;
+  }
+
+  const basePct = totalWeight > 0 ? (totalScore / totalWeight) * 100 : 0;
+  const overallPct = basePct + ecBonus;
+  const letter = letterGrade(overallPct);
+
+  gradeEl.textContent = letter;
+  pctEl.textContent = overallPct.toFixed(2) + '%';
+  breakdownEl.innerHTML = parts.map(p => `<span>${p}</span>`).join('');
+
+  // Note if not all base categories filled
+  if (totalWeight > 0 && totalWeight < 100) {
+    pctEl.textContent += ` (based on ${totalWeight}% of grade` + (ecBonus > 0 ? ` + extra credit` : '') + `)`;
+  }
+}
+
+// ── Clear all ──
+function clearAll() {
+  document.querySelectorAll('.score-input').forEach(el => {
+    el.value = '';
+    el.classList.remove('error');
+  });
+  calculate();
+}
+
+// ── Initialize ──
+buildLectureRows();
+buildRows('hw-rows', hwInfo);
+buildRows('lab-rows', labInfo);
+selectOption(1);
+</script>
+
+</body>
+</html>
